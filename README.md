@@ -48,6 +48,7 @@
 | `stop-argocd.sh` | ปิดระบบ ArgoCD ทั้งหมด |
 | `status-argocd.sh` | ตรวจสอบสถานะระบบ |
 | `get-password.sh` | ดูรหัสผ่าน ArgoCD admin |
+| `reset-admin-password.sh` | รีเซ็ตรหัสผ่าน admin ใหม่ |
 | `manage-argocd.sh` | เมนูจัดการ ArgoCD |
 | `fix-docker-ubuntu.sh` | แก้ไขปัญหา Docker ใน Ubuntu |
 | `fix-installation.sh` | แก้ไขปัญหาการติดตั้งทั่วไป |
@@ -242,10 +243,13 @@ docker info
 ./argocd-direct-https.sh
 ```
 
-**4. ลืมรหัสผ่าน**
+**4. ลืมรหัสผ่าน หรือไม่สามารถดึงรหัสผ่านได้**
 ```bash
 # ดูรหัสผ่าน admin
 ./get-password.sh
+
+# หรือรีเซ็ตรหัสผ่านใหม่
+./reset-admin-password.sh
 ```
 
 ### ดู Log
@@ -276,6 +280,24 @@ cat argocd-install.log
 
 # วิธีที่ 3: วินิจฉัยปัญหาอย่างละเอียด
 ./diagnose-argocd.sh
+```
+
+### การแก้ไขปัญหา "secrets argocd-initial-admin-password not found"
+
+หากคุณเห็นข้อความ `Error from server (NotFound): secrets "argocd-initial-admin-password" not found` หรือไม่สามารถดึงรหัสผ่าน admin ได้ นี่อาจเกิดจาก:
+
+1. **ArgoCD ติดตั้งมานาน**: secret อาจถูกลบไปตามขั้นตอนทำความสะอาด
+2. **ไม่มีการสร้าง secret**: การติดตั้งอาจไม่ได้สร้าง secret ไว้
+3. **รหัสผ่านถูกเปลี่ยน**: ผู้ดูแลระบบอาจเปลี่ยนรหัสผ่านไปแล้ว
+
+วิธีแก้ไข:
+
+```bash
+# รีเซ็ตรหัสผ่าน admin ใหม่ (แนะนำ)
+./reset-admin-password.sh
+
+# หรือลองดูรหัสผ่านเดิมถ้ายังมีอยู่
+./get-password.sh
 ```
 
 ### ดู Log เพิ่มเติม
