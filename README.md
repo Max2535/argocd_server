@@ -174,9 +174,12 @@ docker info
 
 # รีสตาร์ท nginx
 ./simple-nginx.sh
+
+# แก้ไข 502 Bad Gateway
+./fix-502-gateway.sh
 ```
 
-**3. ลืมรหัสผ่าน**
+**4. ลืมรหัสผ่าน**
 ```bash
 # ดูรหัสผ่าน admin
 ./get-password.sh
