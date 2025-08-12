@@ -64,6 +64,19 @@ command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
+# Docker compose command wrapper
+docker_compose() {
+    if command_exists docker-compose; then
+        docker-compose "$@"
+    elif docker compose version >/dev/null 2>&1; then
+        docker compose "$@"
+    else
+        log_error "ไม่พบ docker-compose หรือ docker compose"
+        log_info "กรุณาติดตั้ง Docker Compose"
+        return 1
+    fi
+}
+
 # Wait for user confirmation
 confirm() {
     local message="$1"
@@ -565,10 +578,10 @@ start_nginx_proxy() {
     log "🚀 เริ่มต้น Nginx Reverse Proxy..."
     
     # Stop existing nginx if any
-    docker-compose -f docker-compose-proxy.yml down 2>/dev/null || true
+    docker_compose -f docker-compose-proxy.yml down 2>/dev/null || true
     
     # Start nginx
-    docker-compose -f docker-compose-proxy.yml up -d
+    docker_compose -f docker-compose-proxy.yml up -d
     
     if [[ $? -eq 0 ]]; then
         log "✅ Nginx Reverse Proxy เริ่มต้นสำเร็จ"
@@ -708,7 +721,13 @@ echo $! > .kubectl-proxy.pid
 
 # Start nginx proxy
 echo "🌐 Starting Nginx proxy..."
-docker-compose -f docker-compose-proxy.yml up -d
+if command -v docker-compose >/dev/null 2>&1; then
+    docker-compose -f docker-compose-proxy.yml up -d
+elif docker compose version >/dev/null 2>&1; then
+    docker compose -f docker-compose-proxy.yml up -d
+else
+    echo "❌ docker-compose ไม่พร้อม"
+fi
 
 echo "✅ ArgoCD เริ่มต้นสำเร็จ!"
 echo "🌐 URL: http://localhost"
@@ -723,7 +742,11 @@ echo "🛑 Stopping ArgoCD Full Stack..."
 
 # Stop nginx proxy
 echo "🌐 Stopping Nginx proxy..."
-docker-compose -f docker-compose-proxy.yml down 2>/dev/null || true
+if command -v docker-compose >/dev/null 2>&1; then
+    docker-compose -f docker-compose-proxy.yml down 2>/dev/null || true
+elif docker compose version >/dev/null 2>&1; then
+    docker compose -f docker-compose-proxy.yml down 2>/dev/null || true
+fi
 
 # Stop port forwarding
 echo "🔗 Stopping port forwarding..."
