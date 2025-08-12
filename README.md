@@ -53,6 +53,11 @@
 | `fix-installation.sh` | แก้ไขปัญหาการติดตั้งทั่วไป |
 | `join-cluster-guide.sh` | คู่มือการ join Kubernetes cluster |
 | `join-kind-cluster.sh` | Join kind cluster client อัตโนมัติ |
+| `fix-502-gateway.sh` | แก้ไขปัญหา 502 Bad Gateway |
+| `fix-linux-nginx.sh` | แก้ไขปัญหา nginx บน Linux |
+| `argocd-direct-https.sh` | เข้าถึง ArgoCD ผ่าน HTTPS โดยตรง |
+| `diagnose-argocd.sh` | วินิจฉัยปัญหา ArgoCD อย่างละเอียด |
+| `install-argocd-service.sh` | ติดตั้ง ArgoCD เป็น systemd service |
 
 ### 🌐 เครือข่าย
 | สคริปต์ | คำอธิบาย |
@@ -108,6 +113,47 @@
 2. **Copy ไฟล์** ไปยัง client machine  
 3. **ติดตั้ง kubectl** บน client
 4. **ทดสอบการเชื่อมต่อ**
+
+## 🔐 การเข้าถึง ArgoCD บนเซิร์ฟเวอร์ Linux
+
+ระบบนี้รองรับการเข้าถึง ArgoCD บนเซิร์ฟเวอร์ Linux ด้วย 2 วิธี:
+
+### วิธีที่ 1: ผ่าน HTTP (port 80) ด้วย Nginx
+
+```bash
+# แก้ไขปัญหา 502 Bad Gateway สำหรับ Linux
+./fix-linux-nginx.sh
+
+# เข้าใช้งานผ่าน URL
+http://[your-server-ip]
+```
+
+### วิธีที่ 2: ผ่าน HTTPS โดยตรง (แนะนำ)
+
+```bash
+# เข้าถึง ArgoCD ผ่าน HTTPS โดยตรง
+./argocd-direct-https.sh
+
+# เข้าใช้งานผ่าน URL (จะแสดงหลังรันสคริปต์)
+https://[your-server-ip]:[port]
+```
+
+### ติดตั้งเป็น Systemd Service
+
+```bash
+# ติดตั้ง ArgoCD เป็น systemd service (ต้องใช้ sudo)
+sudo ./install-argocd-service.sh
+
+# ตรวจสอบสถานะ service
+systemctl status argocd-http.service
+```
+
+### วินิจฉัยปัญหา
+
+```bash
+# วินิจฉัยปัญหา ArgoCD อย่างละเอียด
+./diagnose-argocd.sh
+```
 
 ## 🎬 ลองใช้ Demo Applications
 
@@ -179,6 +225,23 @@ docker info
 ./fix-502-gateway.sh
 ```
 
+**3. เข้า ArgoCD UI ไม่ได้ (502 Bad Gateway)**
+
+สำหรับ Windows:
+```bash
+# แก้ไข 502 Bad Gateway
+./fix-502-gateway.sh
+```
+
+สำหรับ Linux:
+```bash
+# แก้ไข 502 Bad Gateway สำหรับ Linux
+./fix-linux-nginx.sh
+
+# หรือใช้วิธีเข้าถึงโดยตรง (แนะนำ)
+./argocd-direct-https.sh
+```
+
 **4. ลืมรหัสผ่าน**
 ```bash
 # ดูรหัสผ่าน admin
@@ -192,6 +255,42 @@ cat argocd-install.log
 
 # ดูสถานะทั้งหมด
 ./status-argocd.sh
+```
+
+### การแก้ไขปัญหา 502 Bad Gateway บน Linux
+
+ปัญหา 502 Bad Gateway บน Linux มักเกิดจาก:
+
+1. **ปัญหา hostname**: `host.docker.internal` ไม่ทำงานบน Linux
+2. **ปัญหา network**: nginx container ไม่สามารถเข้าถึง ArgoCD ได้
+3. **ปัญหา port forwarding**: port forwarding ไม่ทำงานหรือไม่ได้เปิดกับ interface ทั้งหมด
+
+วิธีแก้ไข:
+
+```bash
+# วิธีที่ 1: ใช้ nginx ผ่าน host network
+./fix-linux-nginx.sh
+
+# วิธีที่ 2: เข้าถึง ArgoCD โดยตรงผ่าน HTTPS
+./argocd-direct-https.sh
+
+# วิธีที่ 3: วินิจฉัยปัญหาอย่างละเอียด
+./diagnose-argocd.sh
+```
+
+### ดู Log เพิ่มเติม
+```bash
+# ดู installation log
+cat argocd-install.log
+
+# ดูสถานะทั้งหมด
+./status-argocd.sh
+
+# ดู log ของ nginx container
+docker logs nginx-argocd
+
+# ดู log ของ ArgoCD server
+kubectl logs -n argocd -l app.kubernetes.io/name=argocd-server
 ```
 
 ### รีสตาร์ทระบบ
@@ -222,6 +321,24 @@ cat argocd-install.log
                        │ kind Cluster    │
                        │ (argocd-cluster)│
                        └─────────────────┘
+```
+
+สถาปัตยกรรมสำหรับ Linux Server:
+
+```
+# วิธีที่ 1: ผ่าน Nginx (HTTP)
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│                 │    │                 │    │                 │
+│   Web Browser   │───▶│  Nginx (host)   │───▶│   ArgoCD UI     │
+│                 │    │    (port 80)    │    │  (port 8080)    │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+
+# วิธีที่ 2: โดยตรง (HTTPS)
+┌─────────────────┐    ┌─────────────────┐
+│                 │    │                 │
+│   Web Browser   │───▶│   ArgoCD UI     │
+│                 │    │  (port 8081)    │
+└─────────────────┘    └─────────────────┘
 ```
 
 ## 🤝 การสนับสนุน

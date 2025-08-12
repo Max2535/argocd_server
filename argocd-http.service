@@ -1,0 +1,17 @@
+[Unit]
+Description=ArgoCD Server HTTP Access
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=max
+WorkingDirectory=/home/max
+ExecStart=/usr/bin/kubectl port-forward svc/argocd-server -n argocd 8080:443 --address 0.0.0.0
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

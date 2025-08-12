@@ -222,7 +222,7 @@ if [[ "$fix_choice" =~ ^[Yy]$ ]]; then
     mkdir -p nginx-simple
     cat > nginx-simple/default.conf <<'EOF'
 upstream argocd-server {
-    server host.docker.internal:8080;
+    server localhost:8080;
 }
 
 server {
@@ -265,22 +265,59 @@ EOF
     # Fix 3: Restart nginx container
     log "3. รีสตาร์ท nginx container..."
     
-    # Find and restart docker compose
-    if [[ -f docker-compose-simple.yml ]]; then
+    # Check if we're on Linux
+    is_linux=false
+    if [[ "$(uname -s)" == "Linux" ]]; then
+        is_linux=true
+    fi
+    
+    # Create a Linux-specific docker-compose file if needed
+    if [[ "$is_linux" == "true" ]]; then
+        cat > docker-compose-linux.yml <<'EOF'
+version: '3'
+
+services:
+  nginx-argocd:
+    image: nginx:alpine
+    container_name: nginx-argocd
+    network_mode: "host"  # Use host network for easy localhost access
+    volumes:
+      - ./nginx-simple/default.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped
+EOF
+        
+        log "ตรวจพบว่าเป็น Linux - ใช้ host network mode..."
+        
+        # Stop any existing nginx containers
+        docker stop nginx-argocd >/dev/null 2>&1 || true
+        docker rm nginx-argocd >/dev/null 2>&1 || true
+        
+        # Start with the Linux config
         if command -v docker-compose >/dev/null 2>&1; then
-            docker-compose -f docker-compose-simple.yml down
-            docker-compose -f docker-compose-simple.yml up -d
+            docker-compose -f docker-compose-linux.yml down
+            docker-compose -f docker-compose-linux.yml up -d
         elif docker compose version >/dev/null 2>&1; then
-            docker compose -f docker-compose-simple.yml down
-            docker compose -f docker-compose-simple.yml up -d
+            docker compose -f docker-compose-linux.yml down
+            docker compose -f docker-compose-linux.yml up -d
         fi
-    elif [[ -f docker-compose-proxy.yml ]]; then
-        if command -v docker-compose >/dev/null 2>&1; then
-            docker-compose -f docker-compose-proxy.yml down
-            docker-compose -f docker-compose-proxy.yml up -d
-        elif docker compose version >/dev/null 2>&1; then
-            docker compose -f docker-compose-proxy.yml down
-            docker compose -f docker-compose-proxy.yml up -d
+    else
+        # Find and restart docker compose for Windows/Mac
+        if [[ -f docker-compose-simple.yml ]]; then
+            if command -v docker-compose >/dev/null 2>&1; then
+                docker-compose -f docker-compose-simple.yml down
+                docker-compose -f docker-compose-simple.yml up -d
+            elif docker compose version >/dev/null 2>&1; then
+                docker compose -f docker-compose-simple.yml down
+                docker compose -f docker-compose-simple.yml up -d
+            fi
+        elif [[ -f docker-compose-proxy.yml ]]; then
+            if command -v docker-compose >/dev/null 2>&1; then
+                docker-compose -f docker-compose-proxy.yml down
+                docker-compose -f docker-compose-proxy.yml up -d
+            elif docker compose version >/dev/null 2>&1; then
+                docker compose -f docker-compose-proxy.yml down
+                docker compose -f docker-compose-proxy.yml up -d
+            fi
         fi
     fi
     

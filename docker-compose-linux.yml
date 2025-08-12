@@ -1,0 +1,10 @@
+version: '3'
+
+services:
+  nginx-argocd:
+    image: nginx:alpine
+    container_name: nginx-argocd
+    network_mode: "host"  # Use host network for easy localhost access
+    volumes:
+      - ./nginx-simple/default.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped

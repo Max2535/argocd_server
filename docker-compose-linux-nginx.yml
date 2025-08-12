@@ -1,0 +1,17 @@
+version: '3'
+
+services:
+  nginx-argocd:
+    image: nginx:alpine
+    container_name: nginx-argocd
+    # ใช้ host network mode สำหรับ Linux เพื่อให้เข้าถึง localhost ได้โดยตรง
+    network_mode: "host"
+    volumes:
+      - ./nginx-simple/nginx-linux.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped
+    # คำสั่งสำหรับตรวจสอบว่า nginx ทำงานถูกต้องหรือไม่
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/nginx-status"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
