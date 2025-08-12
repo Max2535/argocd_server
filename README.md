@@ -53,6 +53,8 @@
 | `fix-docker-ubuntu.sh` | แก้ไขปัญหา Docker ใน Ubuntu |
 | `fix-installation.sh` | แก้ไขปัญหาการติดตั้งทั่วไป |
 | `join-cluster-guide.sh` | คู่มือการ join Kubernetes cluster |
+| `join-client.sh` | เครื่องมือเชื่อมต่อ client แบบโต้ตอบ |
+| `setup-client.sh` | ตั้งค่า client แบบอัตโนมัติ |
 | `join-kind-cluster.sh` | Join kind cluster client อัตโนมัติ |
 | `fix-502-gateway.sh` | แก้ไขปัญหา 502 Bad Gateway |
 | `fix-linux-nginx.sh` | แก้ไขปัญหา nginx บน Linux |
@@ -101,12 +103,47 @@
 ### การเชื่อมต่อ Client Machine เพิ่ม
 
 ```bash
+# เครื่องมือเชื่อมต่อ client แบบโต้ตอบ (แนะนำ)
+./join-client.sh
+
 # คู่มือทั่วไป
 ./join-cluster-guide.sh
 
 # สำหรับ kind cluster (อัตโนมัติ)
 ./join-kind-cluster.sh
 ```
+
+### วิธีเชื่อมต่อ Client แบบรวดเร็ว
+
+1. **บนเครื่อง Master Node**:
+   ```bash
+   # สร้าง kubeconfig สำหรับ client
+   ./join-client.sh
+   # เลือกตัวเลือก 1 หรือ 5
+   ```
+
+2. **บนเครื่อง Client** (แบบอัตโนมัติ):
+   ```bash
+   # ดาวน์โหลดและรันสคริปต์ setup-client.sh
+   wget -O setup-client.sh https://raw.githubusercontent.com/Max2535/argocd_server/main/setup-client.sh
+   chmod +x setup-client.sh
+   
+   # รันสคริปต์พร้อมระบุ IP ของ master node
+   ./setup-client.sh 192.168.1.x
+   
+   # หรือรันพร้อมระบุไฟล์ kubeconfig ที่มีอยู่แล้ว
+   ./setup-client.sh /path/to/kubeconfig.yaml
+   ```
+
+3. **การเชื่อมต่อกับ ArgoCD**:
+   ```bash
+   # รันสคริปต์เปิด port-forward (สร้างโดยอัตโนมัติ)
+   ./start-argocd-port-forward.sh
+   
+   # เข้าใช้งานที่ https://localhost:8080
+   # Username: admin
+   # Password: ใช้คำสั่ง ./get-argocd-password.sh
+   ```
 
 ### ขั้นตอนพื้นฐาน
 
@@ -299,6 +336,11 @@ cat argocd-install.log
 # หรือลองดูรหัสผ่านเดิมถ้ายังมีอยู่
 ./get-password.sh
 ```
+
+สคริปต์ `reset-admin-password.sh` จะช่วยคุณในการ:
+- ตรวจสอบสถานะของ secret รหัสผ่าน
+- สร้างรหัสผ่านใหม่และจัดการกับ secret ที่เกี่ยวข้อง
+- แสดงรหัสผ่านใหม่ให้คุณใช้งาน
 
 ### ดู Log เพิ่มเติม
 ```bash
