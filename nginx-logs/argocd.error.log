@@ -1,0 +1,2 @@
+2025/08/12 05:44:25 [error] 25#25: *8 connect() failed (111: Connection refused) while connecting to upstream, client: 172.18.0.1, server: localhost, request: "GET / HTTP/2.0", upstream: "https://127.0.0.1:8080/", host: "localhost"
+2025/08/12 05:44:25 [error] 25#25: *8 connect() failed (111: Connection refused) while connecting to upstream, client: 172.18.0.1, server: localhost, request: "GET /favicon.ico HTTP/2.0", upstream: "https://127.0.0.1:8080/favicon.ico", host: "localhost", referrer: "https://localhost/"

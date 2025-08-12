@@ -52,10 +52,14 @@ fi
 # Check Firewall
 echo ""
 echo "🔥 Firewall:"
-if sudo ufw status | grep -q "Status: active"; then
-    echo "⚠️  UFW Firewall เปิดอยู่ (จะถูกปิดระหว่างการติดตั้ง)"
+if command -v ufw &> /dev/null; then
+    if sudo ufw status | grep -q "Status: active"; then
+        echo "⚠️  UFW Firewall เปิดอยู่ (จะถูกปิดระหว่างการติดตั้ง)"
+    else
+        echo "✅ UFW Firewall ปิดอยู่"
+    fi
 else
-    echo "✅ UFW Firewall ปิดอยู่"
+    echo "✅ UFW Firewall ไม่ได้ติดตั้ง (ไม่มีปัญหา)"
 fi
 
 # Check existing installations
@@ -101,7 +105,7 @@ echo "📊 ตรวจสอบความต้องการขั้นต
 
 # RAM check (minimum 2GB)
 RAM_GB=$(free -m | awk 'NR==2{printf "%.1f", $2/1024}')
-if (( $(echo "$RAM_GB >= 2" | bc -l) )); then
+if awk "BEGIN {exit !($RAM_GB >= 2)}"; then
     echo "✅ RAM: ${RAM_GB}GB (ขั้นต่ำ 2GB)"
 else
     echo "❌ RAM: ${RAM_GB}GB (ต้องการอย่างน้อย 2GB)"
@@ -117,9 +121,11 @@ fi
 
 # Disk check (minimum 20GB available)
 DISK_GB=$(df / | awk 'NR==2{printf "%.1f", $4/1024/1024}')
-if (( $(echo "$DISK_GB >= 20" | bc -l) )); then
+if awk "BEGIN {exit !($DISK_GB >= 20)}"; then
     echo "✅ Disk: ${DISK_GB}GB available (ขั้นต่ำ 20GB)"
 else
+    echo "❌ Disk: ${DISK_GB}GB available (ต้องการอย่างน้อย 20GB)"
+fi
     echo "❌ Disk: ${DISK_GB}GB available (ต้องการอย่างน้อย 20GB)"
 fi
 
@@ -145,7 +151,7 @@ if command -v docker &> /dev/null && systemctl is-active --quiet docker; then
     ISSUES=$((ISSUES+1))
 fi
 
-if (( $(echo "$RAM_GB < 2" | bc -l) )); then
+if awk "BEGIN {exit !($RAM_GB < 2)}"; then
     echo "❌ RAM ไม่เพียงพอ"
     ISSUES=$((ISSUES+1))
 fi
@@ -155,7 +161,7 @@ if [ $CPU_CORES -lt 2 ]; then
     ISSUES=$((ISSUES+1))
 fi
 
-if (( $(echo "$DISK_GB < 20" | bc -l) )); then
+if awk "BEGIN {exit !($DISK_GB < 20)}"; then
     echo "❌ Disk space ไม่เพียงพอ"
     ISSUES=$((ISSUES+1))
 fi

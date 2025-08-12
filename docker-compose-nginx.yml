@@ -1,0 +1,31 @@
+services:
+  nginx-argocd:
+    image: nginx:alpine
+    container_name: nginx-argocd
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx-config/conf.d:/etc/nginx/conf.d
+      - ./nginx-config/ssl:/etc/nginx/ssl
+      - ./nginx-logs:/var/log/nginx
+    restart: unless-stopped
+    networks:
+      - argocd-network
+
+  kubectl-proxy:
+    image: bitnami/kubectl:latest
+    container_name: kubectl-proxy
+    command: >
+      sh -c "
+        echo 'Setting up kubectl proxy...' &&
+        kubectl port-forward svc/argocd-server -n argocd 8080:443 --address=0.0.0.0
+      "
+    volumes:
+      - ~/.kube:/home/kubectl/.kube:ro
+    network_mode: host
+    restart: unless-stopped
+
+networks:
+  argocd-network:
+    driver: bridge

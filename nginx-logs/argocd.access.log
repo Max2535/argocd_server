@@ -1,0 +1,4 @@
+172.18.0.1 - - [12/Aug/2025:05:44:05 +0000] "GET / HTTP/1.1" 400 657 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+172.18.0.1 - - [12/Aug/2025:05:44:05 +0000] "GET /favicon.ico HTTP/1.1" 400 657 "http://localhost:443/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+172.18.0.1 - - [12/Aug/2025:05:44:25 +0000] "GET / HTTP/2.0" 502 559 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+172.18.0.1 - - [12/Aug/2025:05:44:25 +0000] "GET /favicon.ico HTTP/2.0" 502 559 "https://localhost/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
