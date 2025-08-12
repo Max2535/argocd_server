@@ -218,9 +218,8 @@ install_dependencies_linux() {
         exit 1
     fi
     
-    # Start Docker
-    sudo systemctl start docker
-    sudo systemctl enable docker
+    # Start Docker and fix permissions
+    fix_docker_permissions
     
     # Install kubectl
     install_kubectl_linux
@@ -244,6 +243,51 @@ install_kind_linux() {
         [ $(uname -m) = x86_64 ] && curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.20.0/kind-linux-amd64
         chmod +x ./kind
         sudo mv ./kind /usr/local/bin/kind
+    fi
+}
+
+fix_docker_permissions() {
+    log "🔧 แก้ไขปัญหา Docker permissions..."
+    
+    # Start Docker service
+    log_info "เริ่ม Docker service..."
+    sudo systemctl start docker
+    sudo systemctl enable docker
+    
+    # Add user to docker group
+    log_info "เพิ่ม user เข้า docker group..."
+    sudo usermod -aG docker $USER
+    
+    # Fix socket permissions
+    log_info "แก้ไข Docker socket permissions..."
+    sudo chmod 666 /var/run/docker.sock
+    
+    # Test Docker connection
+    if docker info >/dev/null 2>&1; then
+        log "✅ Docker ทำงานปกติ"
+    else
+        log_warn "Docker อาจยังไม่พร้อม - ลอง logout/login หรือ reboot"
+        log_info "หรือรัน: newgrp docker"
+        
+        # Try newgrp workaround
+        if command_exists newgrp; then
+            log_info "พยายามแก้ไขด้วย newgrp..."
+            echo "docker info >/dev/null 2>&1" | newgrp docker
+        fi
+        
+        # Final check with sudo
+        if sudo docker info >/dev/null 2>&1; then
+            log_warn "Docker ทำงานด้วย sudo เท่านั้น"
+            log_info "แนะนำให้ logout/login หรือ reboot เพื่อใช้งานโดยไม่ต้อง sudo"
+        else
+            log_error "Docker ยังคงมีปัญหา"
+            log_info "โปรดตรวจสอบ:"
+            log_info "1. sudo systemctl status docker"
+            log_info "2. sudo journalctl -u docker.service"
+            if ! confirm "ต้องการดำเนินการต่อหรือไม่?"; then
+                exit 1
+            fi
+        fi
     fi
 }
 
@@ -297,6 +341,25 @@ install_dependencies_windows() {
 
 setup_kubernetes_cluster() {
     log "⚙️ ตั้งค่า Kubernetes cluster..."
+    
+    # Check Docker first for Linux
+    if is_linux; then
+        if ! docker info >/dev/null 2>&1; then
+            log_warn "Docker ไม่พร้อม - พยายามแก้ไขอีกครั้ง..."
+            fix_docker_permissions
+            
+            # Final check
+            if ! docker info >/dev/null 2>&1 && ! sudo docker info >/dev/null 2>&1; then
+                log_error "Docker ยังคงไม่ทำงาน"
+                log_info "กรุณาแก้ไขปัญหา Docker ก่อน:"
+                log_info "1. sudo systemctl restart docker"
+                log_info "2. sudo chmod 666 /var/run/docker.sock"
+                log_info "3. logout และ login ใหม่"
+                log_info "4. หรือ reboot server"
+                exit 1
+            fi
+        fi
+    fi
     
     # Check if cluster already exists
     if kubectl cluster-info >/dev/null 2>&1; then

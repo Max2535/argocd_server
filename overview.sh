@@ -41,6 +41,7 @@ echo "   ./stop-argocd.sh           - Stop ArgoCD full stack"
 echo "   ./status-argocd.sh         - Show system status"
 echo "   ./get-password.sh          - Get ArgoCD admin password"
 echo "   ./manage-argocd.sh         - ArgoCD management menu"
+echo "   ./fix-docker-ubuntu.sh     - Fix Docker issues on Ubuntu"
 echo ""
 
 echo -e "${GREEN}🌐 Networking Scripts:${NC}"

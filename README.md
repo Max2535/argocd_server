@@ -116,7 +116,26 @@ Demo applications ที่มีให้:
 
 ### ปัญหาที่พบบ่อย
 
-**1. Docker ไม่ทำงาน**
+**1. Docker ไม่ทำงาน (Ubuntu/Linux)**
+```bash
+# ตรวจสอบสถานะ Docker
+sudo systemctl status docker
+
+# เริ่ม Docker service
+sudo systemctl start docker
+sudo systemctl enable docker
+
+# แก้ไข permissions
+sudo usermod -aG docker $USER
+sudo chmod 666 /var/run/docker.sock
+
+# ทดสอบ
+docker info
+
+# หากยังไม่ได้ ให้ logout/login หรือ reboot
+```
+
+**2. Docker ไม่ทำงาน (Windows)**
 ```bash
 # ตรวจสอบสถานะ Docker
 ./check-system-windows.sh
@@ -125,7 +144,7 @@ Demo applications ที่มีให้:
 ./start-services.sh
 ```
 
-**2. เข้า ArgoCD UI ไม่ได้**
+**3. เข้า ArgoCD UI ไม่ได้**
 ```bash
 # ตรวจสอบสถานะ nginx
 ./status-argocd.sh
